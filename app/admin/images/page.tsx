@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase-admin'
 import Link from 'next/link'
+import SafeImage from '@/app/admin/SafeImage'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,11 +54,10 @@ export default async function ImagesPage() {
               {/* Thumbnail */}
               <div className="relative rounded-lg overflow-hidden mb-3 bg-gray-800" style={{ paddingTop: '66%' }}>
                 {img.url ? (
-                  <img
+                  <SafeImage
                     src={img.url}
                     alt={img.image_description ?? ''}
                     className="absolute inset-0 w-full h-full object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center text-3xl">🖼️</div>

@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase-admin'
+import SafeImage from '@/app/admin/SafeImage'
 
 export const dynamic = 'force-dynamic'
 
@@ -95,11 +96,9 @@ export default async function CaptionsPage() {
                   {/* Thumbnail */}
                   <td className="py-3 pr-4">
                     {img?.url ? (
-                      <img
+                      <SafeImage
                         src={img.url}
-                        alt=""
                         className="w-12 h-10 object-cover rounded-lg"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                       />
                     ) : (
                       <div className="w-12 h-10 rounded-lg flex items-center justify-center text-lg"

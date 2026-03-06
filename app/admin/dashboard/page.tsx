@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase-admin'
+import SafeImage from '@/app/admin/SafeImage'
 
 export const dynamic = 'force-dynamic'
 
@@ -308,11 +309,9 @@ export default async function DashboardPage() {
                   </span>
                 </div>
                 {c.images?.url && (
-                  <img
+                  <SafeImage
                     src={c.images.url}
-                    alt=""
                     className="w-12 h-12 rounded-lg object-cover shrink-0"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                   />
                 )}
                 <div className="flex-1 min-w-0">
@@ -339,11 +338,10 @@ export default async function DashboardPage() {
             {s.recentImages.map(img => (
               <div key={img.id} className="group relative rounded-lg overflow-hidden aspect-square bg-gray-800">
                 {img.url && (
-                  <img
+                  <SafeImage
                     src={img.url}
                     alt={img.image_description ?? ''}
                     className="w-full h-full object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                   />
                 )}
                 {img.image_description && (

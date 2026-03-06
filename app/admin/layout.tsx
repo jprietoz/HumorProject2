@@ -24,7 +24,11 @@ export default async function AdminLayout({
     .eq('id', user.id)
     .single()
 
-  if (!profile?.is_superadmin) {
+  // Must be a superadmin AND have a Columbia/Barnard UNI email
+  const email = profile?.email ?? user.email ?? ''
+  const isApprovedEmail = /^uni\d+@(columbia|barnard)\.edu$/i.test(email)
+
+  if (!profile?.is_superadmin || !isApprovedEmail) {
     redirect('/unauthorized')
   }
 

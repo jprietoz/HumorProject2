@@ -22,6 +22,12 @@ if (!email) {
   process.exit(1)
 }
 
+// Only allow Columbia/Barnard UNI emails
+if (!/^uni\d+@(columbia|barnard)\.edu$/i.test(email)) {
+  console.error(`Error: "${email}" is not a valid UNI email (uni###@columbia.edu or uni###@barnard.edu)`)
+  process.exit(1)
+}
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 

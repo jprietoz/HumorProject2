@@ -22,9 +22,9 @@ if (!email) {
   process.exit(1)
 }
 
-// Only allow Columbia/Barnard UNI emails
-if (!/^uni\d+@(columbia|barnard)\.edu$/i.test(email)) {
-  console.error(`Error: "${email}" is not a valid UNI email (uni###@columbia.edu or uni###@barnard.edu)`)
+// Only allow Columbia/Barnard UNI emails (e.g. jap2333@barnard.edu, abc1234@columbia.edu)
+if (!/^[a-z]+\d+@(columbia|barnard)\.edu$/i.test(email)) {
+  console.error(`Error: "${email}" is not a valid UNI email (e.g. abc1234@columbia.edu or abc1234@barnard.edu)`)
   process.exit(1)
 }
 

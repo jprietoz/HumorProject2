@@ -6,11 +6,12 @@ import { createClient } from '@/lib/auth-client-browser'
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
 
   const handleGoogleLogin = async () => {
     setLoading(true)
     setError(null)
+    // Create client inside handler so it never runs during SSR prerendering
+    const supabase = createClient()
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

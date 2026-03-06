@@ -21,10 +21,10 @@ export default function AdminNav({ userEmail, displayName }: AdminNavProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [loggingOut, setLoggingOut] = useState(false)
-  const supabase = createClient()
 
   const handleLogout = async () => {
     setLoggingOut(true)
+    const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/login')
   }

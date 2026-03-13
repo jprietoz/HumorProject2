@@ -10,6 +10,18 @@ const NAV_ITEMS = [
   { href: '/admin/users', label: 'Users', icon: '👥' },
   { href: '/admin/images', label: 'Images', icon: '🖼️' },
   { href: '/admin/captions', label: 'Captions', icon: '💬' },
+  { href: '/admin/caption-requests', label: 'Caption Requests', icon: '📋' },
+  { href: '/admin/caption-examples', label: 'Caption Examples', icon: '✨' },
+  { href: '/admin/humor-flavors', label: 'Humor Flavors', icon: '🎨' },
+  { href: '/admin/humor-flavor-steps', label: 'Flavor Steps', icon: '🔢' },
+  { href: '/admin/humor-mix', label: 'Humor Mix', icon: '🎛️' },
+  { href: '/admin/terms', label: 'Terms', icon: '📖' },
+  { href: '/admin/llm-providers', label: 'LLM Providers', icon: '🏢' },
+  { href: '/admin/llm-models', label: 'LLM Models', icon: '🤖' },
+  { href: '/admin/llm-prompt-chains', label: 'Prompt Chains', icon: '⛓️' },
+  { href: '/admin/llm-responses', label: 'LLM Responses', icon: '💡' },
+  { href: '/admin/allowed-domains', label: 'Allowed Domains', icon: '🌐' },
+  { href: '/admin/whitelisted-emails', label: 'Whitelisted Emails', icon: '📧' },
 ]
 
 interface AdminNavProps {

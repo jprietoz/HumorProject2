@@ -8,9 +8,10 @@ export async function GET() {
 
   const db = createAdminClient()
   const { data, error } = await db
-    .from('llm_models')
-    .select('id, name, provider_model_id, is_temperature_supported, created_datetime_utc, llm_providers(name)')
-    .order('name')
+    .from('humor_flavors')
+    .select('id, slug, description, created_datetime_utc')
+    .order('created_datetime_utc', { ascending: false })
+
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }
@@ -20,16 +21,22 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
-  const { name, llm_provider_id, provider_model_id, is_temperature_supported } = body
-  if (!name) return NextResponse.json({ error: 'Name is required' }, { status: 400 })
-  if (!llm_provider_id) return NextResponse.json({ error: 'Provider is required' }, { status: 400 })
+  const { slug, description } = body
+
+  if (!slug) return NextResponse.json({ error: 'Slug is required' }, { status: 400 })
 
   const db = createAdminClient()
   const { data, error } = await db
-    .from('llm_models')
-    .insert({ name, llm_provider_id: Number(llm_provider_id), provider_model_id: provider_model_id || null, is_temperature_supported: is_temperature_supported ?? true, created_by_user_id: user.id, modified_by_user_id: user.id })
+    .from('humor_flavors')
+    .insert({
+      slug: slug.trim().toLowerCase(),
+      description: description || null,
+      created_by_user_id: user.id,
+      modified_by_user_id: user.id,
+    })
     .select()
     .single()
+
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data, { status: 201 })
 }

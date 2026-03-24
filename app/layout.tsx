@@ -13,6 +13,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('admin-theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}else if(t==='system'||!t){/* no attribute = let CSS media query decide */}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="antialiased">{children}</body>
     </html>
   );

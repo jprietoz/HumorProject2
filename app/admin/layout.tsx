@@ -16,19 +16,20 @@ export default async function AdminLayout({
     redirect('/login')
   }
 
-  // 2. Check superadmin status using the admin (service-role) client to bypass RLS
+  // 2. Check admin status using the admin (service-role) client to bypass RLS
   const adminClient = createAdminClient()
   const { data: profile } = await adminClient
     .from('profiles')
-    .select('is_superadmin, first_name, last_name, email')
+    .select('is_superadmin, is_matrix_admin, first_name, last_name, email')
     .eq('id', user.id)
     .single()
 
-  // Must be a superadmin AND have a Columbia/Barnard UNI email
+  // Must be a superadmin OR matrix_admin AND have a Columbia/Barnard UNI email
   const email = profile?.email ?? user.email ?? ''
   const isApprovedEmail = /^[a-z]+\d+@(columbia|barnard)\.edu$/i.test(email)
+  const isAdmin = profile?.is_superadmin || profile?.is_matrix_admin
 
-  if (!profile?.is_superadmin || !isApprovedEmail) {
+  if (!isAdmin || !isApprovedEmail) {
     redirect('/unauthorized')
   }
 

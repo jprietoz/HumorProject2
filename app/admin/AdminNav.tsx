@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/auth-client-browser'
 import { useState } from 'react'
+import ThemeToggle from './ThemeToggle'
 
 const NAV_ITEMS = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: '📊' },
@@ -84,6 +85,7 @@ export default function AdminNav({ userEmail, displayName }: AdminNavProps) {
           <p className="text-xs font-semibold text-white truncate">{displayName}</p>
           <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{userEmail}</p>
         </div>
+        <ThemeToggle />
         <button
           onClick={handleLogout}
           disabled={loggingOut}

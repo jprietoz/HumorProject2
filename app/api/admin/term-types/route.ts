@@ -1,18 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-admin'
-import { createClient } from '@/lib/auth-client-server'
-
-async function assertSuperadmin() {
-  const authClient = await createClient()
-  const { data: { user } } = await authClient.auth.getUser()
-  if (!user) return null
-  const db = createAdminClient()
-  const { data: profile } = await db.from('profiles').select('is_superadmin').eq('id', user.id).single()
-  return profile?.is_superadmin ? user : null
-}
+import { assertAdmin } from '@/lib/assert-admin'
 
 export async function GET() {
-  const user = await assertSuperadmin()
+  const user = await assertAdmin()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const db = createAdminClient()

@@ -53,6 +53,8 @@ export async function POST(request: Request) {
       is_public: is_public ?? false,
       is_common_use: is_common_use ?? false,
       profile_id: user.id,
+      created_by_user_id: user.id,
+      modified_by_user_id: user.id,
     })
     .select()
     .single()

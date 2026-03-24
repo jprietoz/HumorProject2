@@ -49,7 +49,10 @@ export default function LoginPage() {
 
           {error && (
             <div className="mb-4 p-3 rounded-lg text-sm text-center"
-                 style={{ background: '#ef44441a', color: '#ef4444', border: '1px solid #ef444433' }}>
+                 style={{ background: '#ef44441a',
+
+                     color: '#ef4444', border: '1px solid #ef444433' }}>
+
               {error}
             </div>
           )}

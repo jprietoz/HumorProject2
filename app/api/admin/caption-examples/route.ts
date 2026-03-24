@@ -43,6 +43,8 @@ export async function POST(request: Request) {
       explanation: explanation || null,
       priority: priority ?? 0,
       image_id: image_id || null,
+      created_by_user_id: user.id,
+      modified_by_user_id: user.id,
     })
     .select()
     .single()

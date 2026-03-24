@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   const db = createAdminClient()
   const { data, error } = await db
     .from('allowed_signup_domains')
-    .insert({ apex_domain: apex_domain.toLowerCase().trim() })
+    .insert({ apex_domain: apex_domain.toLowerCase().trim(), created_by_user_id: user.id, modified_by_user_id: user.id })
     .select()
     .single()
 

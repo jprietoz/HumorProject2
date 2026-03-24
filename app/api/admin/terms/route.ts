@@ -43,6 +43,8 @@ export async function POST(request: Request) {
       example: example || null,
       priority: priority ?? 0,
       term_type_id: term_type_id || null,
+      created_by_user_id: user.id,
+      modified_by_user_id: user.id,
     })
     .select()
     .single()

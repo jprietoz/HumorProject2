@@ -32,7 +32,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (!name) return NextResponse.json({ error: 'Name is required' }, { status: 400 })
 
   const db = createAdminClient()
-  const { data, error } = await db.from('llm_providers').update({ name }).eq('id', id).select().single()
+  const { data, error } = await db.from('llm_providers').update({ name, modified_by_user_id: user.id }).eq('id', id).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }

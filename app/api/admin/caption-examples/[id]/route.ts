@@ -46,7 +46,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       explanation: explanation || null,
       priority: priority ?? 0,
       image_id: image_id || null,
-      modified_datetime_utc: new Date().toISOString(),
+      modified_by_user_id: user.id,
     })
     .eq('id', id)
     .select()

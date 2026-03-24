@@ -26,7 +26,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const db = createAdminClient()
   const { data, error } = await db
     .from('humor_flavor_mix')
-    .update({ caption_count: Number(caption_count) })
+    .update({ caption_count: Number(caption_count), modified_by_user_id: user.id })
     .eq('id', id)
     .select()
     .single()

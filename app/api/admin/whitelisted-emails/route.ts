@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   const db = createAdminClient()
   const { data, error } = await db
     .from('whitelist_email_addresses')
-    .insert({ email_address: email_address.toLowerCase().trim() })
+    .insert({ email_address: email_address.toLowerCase().trim(), created_by_user_id: user.id, modified_by_user_id: user.id })
     .select()
     .single()
 

@@ -54,7 +54,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       additional_context: additional_context || null,
       is_public: is_public ?? false,
       is_common_use: is_common_use ?? false,
-      modified_datetime_utc: new Date().toISOString(),
+      modified_by_user_id: user.id,
     })
     .eq('id', id)
     .select()

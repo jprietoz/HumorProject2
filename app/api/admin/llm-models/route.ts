@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   const db = createAdminClient()
   const { data, error } = await db
     .from('llm_models')
-    .insert({ name, llm_provider_id: Number(llm_provider_id), provider_model_id: provider_model_id || null, is_temperature_supported: is_temperature_supported ?? true })
+    .insert({ name, llm_provider_id: Number(llm_provider_id), provider_model_id: provider_model_id || null, is_temperature_supported: is_temperature_supported ?? true, created_by_user_id: user.id, modified_by_user_id: user.id })
     .select()
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

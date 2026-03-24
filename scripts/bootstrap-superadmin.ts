@@ -44,16 +44,27 @@ const db = createClient(supabaseUrl, serviceRoleKey, {
 async function run() {
   console.log(`Looking up profile for: ${email}`)
 
+  const { data: existing, error: lookupError } = await db
+    .from('profiles')
+    .select('id')
+    .eq('email', email)
+    .single()
+
+  if (lookupError || !existing) {
+    console.error('Profile not found:', lookupError?.message)
+    console.error('Make sure you have signed in with Google at least once first.')
+    process.exit(1)
+  }
+
   const { data: profile, error } = await db
     .from('profiles')
-    .update({ is_superadmin: true })
+    .update({ is_superadmin: true, modified_by_user_id: existing.id })
     .eq('email', email)
     .select('id, email, is_superadmin')
     .single()
 
   if (error || !profile) {
-    console.error('Profile not found or update failed:', error?.message)
-    console.error('Make sure you have signed in with Google at least once first.')
+    console.error('Update failed:', error?.message)
     process.exit(1)
   }
 

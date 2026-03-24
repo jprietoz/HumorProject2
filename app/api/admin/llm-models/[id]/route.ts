@@ -39,7 +39,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const db = createAdminClient()
   const { data, error } = await db
     .from('llm_models')
-    .update({ name, llm_provider_id: Number(llm_provider_id), provider_model_id: provider_model_id || null, is_temperature_supported: is_temperature_supported ?? true })
+    .update({ name, llm_provider_id: Number(llm_provider_id), provider_model_id: provider_model_id || null, is_temperature_supported: is_temperature_supported ?? true, modified_by_user_id: user.id })
     .eq('id', id)
     .select()
     .single()

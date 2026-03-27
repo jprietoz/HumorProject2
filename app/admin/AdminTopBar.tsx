@@ -30,9 +30,9 @@ export default function AdminTopBar({ userEmail, displayName }: AdminTopBarProps
       <button
         onClick={handleLogout}
         disabled={loggingOut}
-        className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow-md transition duration-150 ease-in-out"
+        className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-2 rounded shadow-md transition duration-150 ease-in-out"
       >
-        {loggingOut ? 'Signing out…' : '→ Sign out'}
+        {loggingOut ? 'Signing out…' : 'Sign Out'}
       </button>
       {/* User info */}
       <div className="flex flex-col items-end">

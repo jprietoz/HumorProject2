@@ -27,18 +27,18 @@ export default function AdminTopBar({ userEmail, displayName }: AdminTopBarProps
       style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}
     >
       <ThemeToggle />
-      <button
-        onClick={handleLogout}
-        disabled={loggingOut}
-        className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-2 rounded shadow-md transition duration-150 ease-in-out"
-      >
-        {loggingOut ? 'Signing out…' : 'Sign Out'}
-      </button>
       {/* User info */}
       <div className="flex flex-col items-end">
         <p className="text-xs font-semibold text-white truncate">{displayName}</p>
         <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{userEmail}</p>
       </div>
+      <button
+        onClick={handleLogout}
+        disabled={loggingOut}
+        className="bg-red-600 hover:bg-red-700 text-white font-semibold py-0.5 px-3 rounded text-xs shadow-md transition duration-150 ease-in-out whitespace-nowrap"
+      >
+        {loggingOut ? 'Signing out…' : 'Sign Out'}
+      </button>
     </div>
   )
 }

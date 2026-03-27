@@ -5,11 +5,7 @@ import { useEffect, useState } from 'react'
 type Theme = 'dark' | 'light'
 
 function applyTheme(theme: Theme) {
-  if (theme === 'dark') {
-    document.documentElement.removeAttribute('data-theme')
-  } else {
-    document.documentElement.setAttribute('data-theme', theme)
-  }
+  document.documentElement.setAttribute('data-theme', theme)
   try { localStorage.setItem('admin-theme', theme) } catch {}
 }
 

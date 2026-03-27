@@ -52,6 +52,7 @@ const NAV_GROUPS = [
   },
 ]
 
+
 interface AdminNavProps {
   userEmail: string
   displayName: string
@@ -115,14 +116,6 @@ export default function AdminNav({ userEmail, displayName }: AdminNavProps) {
           </div>
         ))}
       </nav>
-
-      {/* User info */}
-      <div className="border-t pt-4 mt-4" style={{ borderColor: 'var(--border)' }}>
-        <div className="px-2">
-          <p className="text-xs font-semibold text-white truncate">{displayName}</p>
-          <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{userEmail}</p>
-        </div>
-      </div>
     </aside>
   )
 }

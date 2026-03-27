@@ -42,7 +42,7 @@ export default async function AdminLayout({
     <div className="min-h-screen flex" style={{ background: 'var(--bg-primary)' }}>
       <AdminNav userEmail={user.email ?? ''} displayName={displayName} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <AdminTopBar />
+        <AdminTopBar displayName={displayName} userEmail={user.email ?? ''} />
         <main className="flex-1 p-6 lg:p-8 overflow-auto">
           {children}
         </main>

@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react'
 
-type Theme = 'dark' | 'light' | 'system'
+type Theme = 'dark' | 'light'
 
 function applyTheme(theme: Theme) {
-  if (theme === 'system') {
+  if (theme === 'dark') {
     document.documentElement.removeAttribute('data-theme')
   } else {
     document.documentElement.setAttribute('data-theme', theme)
@@ -19,18 +19,21 @@ export default function ThemeToggle() {
   useEffect(() => {
     try {
       const stored = localStorage.getItem('admin-theme') as Theme | null
-      setTheme(stored === 'light' || stored === 'system' ? stored : 'dark')
+      setTheme(stored === 'light' ? stored: 'dark')
+      //'system' no longer exists as a valid theme, so reading it from storage should
+        // fall back to 'dark' instead of being accepted.
     } catch {}
   }, [])
 
   const cycle = () => {
-    const next: Theme = theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark'
+    const next: Theme = theme === 'dark' ? 'light' : 'dark'
+    // only have two states that toggle like : dark --> light --> dark
     setTheme(next)
     applyTheme(next)
   }
 
-  const icon = theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '💻'
-  const label = theme === 'dark' ? 'Dark' : theme === 'light' ? 'Light' : 'System'
+  const icon = theme === 'dark' ? '🌙' : '☀️'
+  const label = theme === 'dark' ? 'Dark' : 'Light' // theme == dark else light
 
   return (
     <button

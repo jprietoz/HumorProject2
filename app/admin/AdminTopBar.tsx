@@ -5,7 +5,12 @@ import { useState } from 'react'
 import { createClient } from '@/lib/auth-client-browser'
 import ThemeToggle from './ThemeToggle'
 
-export default function AdminTopBar() {
+interface AdminTopBarProps {
+  userEmail: string
+  displayName: string
+}
+
+export default function AdminTopBar({ userEmail, displayName }: AdminTopBarProps) {
   const router = useRouter()
   const [loggingOut, setLoggingOut] = useState(false)
 
@@ -25,11 +30,15 @@ export default function AdminTopBar() {
       <button
         onClick={handleLogout}
         disabled={loggingOut}
-        className="px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-50"
-        style={{ color: 'var(--text-muted)' }}
+        className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow-md transition duration-150 ease-in-out"
       >
         {loggingOut ? 'Signing out…' : '→ Sign out'}
       </button>
+      {/* User info */}
+      <div className="flex flex-col items-end">
+        <p className="text-xs font-semibold text-white truncate">{displayName}</p>
+        <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{userEmail}</p>
+      </div>
     </div>
   )
 }

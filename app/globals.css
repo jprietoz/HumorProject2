@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Prevent white flash on navigation — apply bg to html/body immediately */
+html, body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
 /* Dark theme (default) */
 :root,
 [data-theme="dark"] {

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/auth-client-server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import AdminNav from './AdminNav'
+import AdminTopBar from './AdminTopBar'
 
 export default async function AdminLayout({
   children,
@@ -40,9 +41,12 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen flex" style={{ background: 'var(--bg-primary)' }}>
       <AdminNav userEmail={user.email ?? ''} displayName={displayName} />
-      <main className="flex-1 p-6 lg:p-8 overflow-auto">
-        {children}
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <AdminTopBar />
+        <main className="flex-1 p-6 lg:p-8 overflow-auto">
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

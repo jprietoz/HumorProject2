@@ -36,7 +36,9 @@ export default function TestFlavorPage({ params }: { params: Promise<{ id: strin
   const captions: string[] = (() => {
     if (!result) return []
     const r = result.result as Record<string, unknown>
-    if (Array.isArray(r)) return r.map(String)
+    if (Array.isArray(r)) return r.map(c =>
+      typeof c === 'string' ? c : (c as Record<string, unknown>)?.content as string ?? JSON.stringify(c)
+    )
     if (Array.isArray(r?.captions)) return (r.captions as unknown[]).map(c =>
       typeof c === 'string' ? c : (c as Record<string, unknown>)?.content as string ?? JSON.stringify(c)
     )

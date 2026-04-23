@@ -25,7 +25,6 @@ async function getCaptions(page = 0, flavorSlug?: string) {
     .order('created_datetime_utc', { ascending: false })
 
   if (flavorSlug) {
-    // Join via humor_flavors to filter
     const { data: flavor } = await db
       .from('humor_flavors')
       .select('id')
@@ -48,6 +47,83 @@ async function getFlavors() {
   return data ?? []
 }
 
+async function getRatingStats() {
+  const db = createAdminClient()
+
+  const [
+    totalVotesRes,
+    upvotesRes,
+    ratedCaptionsRes,
+    topCaptionsRes,
+    flavorCaptionsRes,
+    humorFlavorsRes,
+  ] = await Promise.all([
+    db.from('caption_votes').select('*', { count: 'exact', head: true }),
+    db.from('caption_votes').select('*', { count: 'exact', head: true }).gt('vote_value', 0),
+    db.from('captions').select('*', { count: 'exact', head: true }).gt('like_count', 0),
+    db.from('captions')
+      .select('id, content, like_count, images(url), humor_flavors(slug)')
+      .order('like_count', { ascending: false })
+      .limit(5),
+    // Fetch captions with flavor info for per-flavor aggregation (cap at 5000)
+    db.from('captions')
+      .select('humor_flavor_id, like_count')
+      .not('humor_flavor_id', 'is', null)
+      .limit(5000),
+    db.from('humor_flavors').select('id, slug'),
+  ])
+
+  const totalVotes = totalVotesRes.count ?? 0
+  const upvotes = upvotesRes.count ?? 0
+  const ratedCaptions = ratedCaptionsRes.count ?? 0
+
+  // Aggregate per-flavor stats from caption rows
+  const flavorMap: Record<string, { totalLikes: number; captionCount: number; ratedCount: number }> = {}
+  for (const row of flavorCaptionsRes.data ?? []) {
+    const id = String(row.humor_flavor_id)
+    if (!flavorMap[id]) flavorMap[id] = { totalLikes: 0, captionCount: 0, ratedCount: 0 }
+    flavorMap[id].captionCount++
+    flavorMap[id].totalLikes += row.like_count ?? 0
+    if ((row.like_count ?? 0) > 0) flavorMap[id].ratedCount++
+  }
+
+  const flavorStats = (humorFlavorsRes.data ?? [])
+    .map(f => ({
+      id: String(f.id),
+      slug: f.slug as string,
+      ...(flavorMap[String(f.id)] ?? { totalLikes: 0, captionCount: 0, ratedCount: 0 }),
+    }))
+    .filter(f => f.captionCount > 0)
+    .sort((a, b) => b.totalLikes - a.totalLikes)
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const topCaptions = (topCaptionsRes.data ?? []) as any as Array<{
+    id: string
+    content: string | null
+    like_count: number
+    images: { url: string } | null
+    humor_flavors: { slug: string } | null
+  }>
+
+  return { totalVotes, upvotes, ratedCaptions, flavorStats, topCaptions }
+}
+
+function StatCard({ label, value, sub, color }: { label: string; value: number | string; sub?: string; color?: string }) {
+  return (
+    <div className="stat-card">
+      <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>
+        {label}
+      </p>
+      <p className="text-3xl font-bold" style={{ color: color ?? '#e2e8f0' }}>
+        {typeof value === 'number' ? value.toLocaleString() : value}
+      </p>
+      {sub && (
+        <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{sub}</p>
+      )}
+    </div>
+  )
+}
+
 function Badge({ label, color }: { label: string; color: string }) {
   return (
     <span className="text-xs px-1.5 py-0.5 rounded font-semibold" style={{ background: `${color}22`, color }}>
@@ -62,9 +138,10 @@ export default async function CaptionsPage({
   searchParams: Promise<{ flavor?: string }>
 }) {
   const { flavor: flavorSlug } = await searchParams
-  const [{ data: captions, count }, flavors] = await Promise.all([
+  const [{ data: captions, count }, flavors, stats] = await Promise.all([
     getCaptions(0, flavorSlug),
     getFlavors(),
+    getRatingStats(),
   ])
 
   type CaptionRow = typeof captions[number]
@@ -85,18 +162,162 @@ export default async function CaptionsPage({
     return Array.isArray(f) ? f[0] ?? null : f ?? null
   }
 
+  const upvoteRate = stats.totalVotes > 0 ? Math.round((stats.upvotes / stats.totalVotes) * 100) : 0
+  const avgVotesPerCaption = count > 0 ? (stats.totalVotes / count).toFixed(1) : '0'
+  const ratedPct = count > 0 ? Math.round((stats.ratedCaptions / count) * 100) : 0
+
+  const flavorColors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#84cc16']
+
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Captions</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-            Showing {captions.length} of {count.toLocaleString()} captions (newest first)
-            {flavorSlug && <span> · filtered by <span style={{ color: '#8b5cf6' }}>{flavorSlug}</span></span>}
-          </p>
-        </div>
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-white">Captions</h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+          Ratings &amp; engagement statistics across all captions
+        </p>
+      </div>
+
+      {/* Rating stat cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <StatCard label="Total Votes" value={stats.totalVotes} color="#8b5cf6" />
+        <StatCard
+          label="Upvote Rate"
+          value={`${upvoteRate}%`}
+          sub={`${stats.upvotes.toLocaleString()} upvotes`}
+          color={upvoteRate >= 60 ? '#10b981' : '#f59e0b'}
+        />
+        <StatCard
+          label="Avg Votes / Caption"
+          value={avgVotesPerCaption}
+          sub={`across ${count.toLocaleString()} captions`}
+          color="#e2e8f0"
+        />
+        <StatCard
+          label="Captions Rated"
+          value={stats.ratedCaptions.toLocaleString()}
+          sub={`${ratedPct}% of all captions`}
+          color="#3b82f6"
+        />
+      </div>
+
+      {/* Flavor stats + Top rated */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+
+        {/* Per-flavor rating breakdown */}
+        {stats.flavorStats.length > 0 && (
+          <div className="card">
+            <h2 className="font-semibold text-white mb-1">Ratings by Humor Flavor</h2>
+            <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>
+              Total likes earned per AI humor style
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                    {['Flavor', 'Captions', 'Total Likes', 'Avg Likes', '% Rated'].map(h => (
+                      <th key={h} className="text-left pb-2 pr-3 font-semibold uppercase tracking-wider"
+                          style={{ color: 'var(--text-muted)' }}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.flavorStats.map((f, i) => {
+                    const avg = f.captionCount > 0 ? (f.totalLikes / f.captionCount).toFixed(1) : '0'
+                    const pct = f.captionCount > 0 ? Math.round((f.ratedCount / f.captionCount) * 100) : 0
+                    const maxLikes = stats.flavorStats[0]?.totalLikes ?? 1
+                    const barWidth = maxLikes > 0 ? Math.round((f.totalLikes / maxLikes) * 100) : 0
+                    const color = flavorColors[i % flavorColors.length]
+                    return (
+                      <tr key={f.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td className="py-2 pr-3">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
+                            <Link href={`/admin/captions?flavor=${f.slug}`}
+                                  className="font-mono hover:underline" style={{ color }}>
+                              {f.slug}
+                            </Link>
+                          </div>
+                        </td>
+                        <td className="py-2 pr-3" style={{ color: 'var(--text-muted)' }}>
+                          {f.captionCount.toLocaleString()}
+                        </td>
+                        <td className="py-2 pr-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 h-1.5 rounded-full" style={{ background: 'var(--border)' }}>
+                              <div className="h-full rounded-full" style={{ width: `${barWidth}%`, background: color }} />
+                            </div>
+                            <span className="font-semibold text-white">{f.totalLikes.toLocaleString()}</span>
+                          </div>
+                        </td>
+                        <td className="py-2 pr-3 font-semibold" style={{ color: '#10b981' }}>
+                          {avg}
+                        </td>
+                        <td className="py-2">
+                          <span style={{ color: pct >= 50 ? '#10b981' : 'var(--text-muted)' }}>
+                            {pct}%
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Top rated captions */}
+        {stats.topCaptions.length > 0 && (
+          <div className="card">
+            <h2 className="font-semibold text-white mb-1">Top Rated Captions</h2>
+            <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>
+              Highest liked captions across the platform
+            </p>
+            <div className="space-y-3">
+              {stats.topCaptions.map((c, i) => {
+                const rankColor = i === 0 ? '#f59e0b' : i === 1 ? '#94a3b8' : i === 2 ? '#b45309' : 'var(--text-muted)'
+                const img = Array.isArray(c.images) ? c.images[0] : c.images
+                const flavor = Array.isArray(c.humor_flavors) ? c.humor_flavors[0] : c.humor_flavors
+                return (
+                  <div key={c.id} className="flex items-start gap-3 p-3 rounded-lg"
+                       style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)' }}>
+                    <span className="text-sm font-bold w-5 shrink-0 text-center" style={{ color: rankColor }}>
+                      #{i + 1}
+                    </span>
+                    {img?.url && (
+                      <SafeImage src={img.url} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-white leading-snug line-clamp-2">{c.content ?? '—'}</p>
+                      {flavor?.slug && (
+                        <span className="text-xs font-mono mt-1 inline-block" style={{ color: '#8b5cf6' }}>
+                          {flavor.slug}
+                        </span>
+                      )}
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-base font-bold" style={{ color: '#10b981' }}>{c.like_count}</p>
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>likes</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Caption table */}
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          Showing {captions.length} of {count.toLocaleString()} captions (newest first)
+          {flavorSlug && <span> · filtered by <span style={{ color: '#8b5cf6' }}>{flavorSlug}</span></span>}
+        </p>
         {/* Flavor filter */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
           <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Flavor:</span>
           <div className="flex gap-1 flex-wrap">
             <Link href="/admin/captions"

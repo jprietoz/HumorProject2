@@ -47,65 +47,73 @@ async function getFlavors() {
   return data ?? []
 }
 
+const EMPTY_STATS = {
+  totalVotes: 0,
+  upvotes: 0,
+  ratedCaptions: 0,
+  flavorStats: [] as Array<{ id: string; slug: string; totalLikes: number; captionCount: number; ratedCount: number }>,
+  topCaptions: [] as Array<{
+    id: string; content: string | null; like_count: number
+    images: { url: string } | null; humor_flavors: { slug: string } | null
+  }>,
+}
+
 async function getRatingStats() {
-  const db = createAdminClient()
+  try {
+    const db = createAdminClient()
 
-  const [
-    totalVotesRes,
-    upvotesRes,
-    ratedCaptionsRes,
-    topCaptionsRes,
-    flavorCaptionsRes,
-    humorFlavorsRes,
-  ] = await Promise.all([
-    db.from('caption_votes').select('*', { count: 'exact', head: true }),
-    db.from('caption_votes').select('*', { count: 'exact', head: true }).gt('vote_value', 0),
-    db.from('captions').select('*', { count: 'exact', head: true }).gt('like_count', 0),
-    db.from('captions')
-      .select('id, content, like_count, images(url), humor_flavors(slug)')
-      .order('like_count', { ascending: false })
-      .limit(5),
-    // Fetch captions with flavor info for per-flavor aggregation (cap at 5000)
-    db.from('captions')
-      .select('humor_flavor_id, like_count')
-      .not('humor_flavor_id', 'is', null)
-      .limit(5000),
-    db.from('humor_flavors').select('id, slug'),
-  ])
+    const [
+      totalVotesRes,
+      upvotesRes,
+      topCaptionsRes,
+      flavorCaptionsRes,
+      humorFlavorsRes,
+    ] = await Promise.all([
+      db.from('caption_votes').select('*', { count: 'exact', head: true }),
+      db.from('caption_votes').select('*', { count: 'exact', head: true }).gt('vote_value', 0),
+      db.from('captions')
+        .select('id, content, like_count, image_id, humor_flavor_id, images(url), humor_flavors(slug)')
+        .order('like_count', { ascending: false })
+        .limit(5),
+      // Fetch captions with flavor info for per-flavor aggregation
+      db.from('captions')
+        .select('humor_flavor_id, like_count')
+        .not('humor_flavor_id', 'is', null)
+        .limit(2000),
+      db.from('humor_flavors').select('id, slug'),
+    ])
 
-  const totalVotes = totalVotesRes.count ?? 0
-  const upvotes = upvotesRes.count ?? 0
-  const ratedCaptions = ratedCaptionsRes.count ?? 0
+    const totalVotes = totalVotesRes.count ?? 0
+    const upvotes = upvotesRes.count ?? 0
 
-  // Aggregate per-flavor stats from caption rows
-  const flavorMap: Record<string, { totalLikes: number; captionCount: number; ratedCount: number }> = {}
-  for (const row of flavorCaptionsRes.data ?? []) {
-    const id = String(row.humor_flavor_id)
-    if (!flavorMap[id]) flavorMap[id] = { totalLikes: 0, captionCount: 0, ratedCount: 0 }
-    flavorMap[id].captionCount++
-    flavorMap[id].totalLikes += row.like_count ?? 0
-    if ((row.like_count ?? 0) > 0) flavorMap[id].ratedCount++
+    // Aggregate per-flavor stats from caption rows
+    const flavorMap: Record<string, { totalLikes: number; captionCount: number; ratedCount: number }> = {}
+    let ratedCaptions = 0
+    for (const row of flavorCaptionsRes.data ?? []) {
+      const id = String(row.humor_flavor_id)
+      if (!flavorMap[id]) flavorMap[id] = { totalLikes: 0, captionCount: 0, ratedCount: 0 }
+      flavorMap[id].captionCount++
+      const likes = Number(row.like_count ?? 0)
+      flavorMap[id].totalLikes += likes
+      if (likes > 0) { flavorMap[id].ratedCount++; ratedCaptions++ }
+    }
+
+    const flavorStats = (humorFlavorsRes.data ?? [])
+      .map(f => ({
+        id: String(f.id),
+        slug: f.slug as string,
+        ...(flavorMap[String(f.id)] ?? { totalLikes: 0, captionCount: 0, ratedCount: 0 }),
+      }))
+      .filter(f => f.captionCount > 0)
+      .sort((a, b) => b.totalLikes - a.totalLikes)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const topCaptions = (topCaptionsRes.data ?? []) as any as typeof EMPTY_STATS['topCaptions']
+
+    return { totalVotes, upvotes, ratedCaptions, flavorStats, topCaptions }
+  } catch {
+    return EMPTY_STATS
   }
-
-  const flavorStats = (humorFlavorsRes.data ?? [])
-    .map(f => ({
-      id: String(f.id),
-      slug: f.slug as string,
-      ...(flavorMap[String(f.id)] ?? { totalLikes: 0, captionCount: 0, ratedCount: 0 }),
-    }))
-    .filter(f => f.captionCount > 0)
-    .sort((a, b) => b.totalLikes - a.totalLikes)
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const topCaptions = (topCaptionsRes.data ?? []) as any as Array<{
-    id: string
-    content: string | null
-    like_count: number
-    images: { url: string } | null
-    humor_flavors: { slug: string } | null
-  }>
-
-  return { totalVotes, upvotes, ratedCaptions, flavorStats, topCaptions }
 }
 
 function StatCard({ label, value, sub, color }: { label: string; value: number | string; sub?: string; color?: string }) {
@@ -279,8 +287,8 @@ export default async function CaptionsPage({
             <div className="space-y-3">
               {stats.topCaptions.map((c, i) => {
                 const rankColor = i === 0 ? '#f59e0b' : i === 1 ? '#94a3b8' : i === 2 ? '#b45309' : 'var(--text-muted)'
-                const img = Array.isArray(c.images) ? c.images[0] : c.images
-                const flavor = Array.isArray(c.humor_flavors) ? c.humor_flavors[0] : c.humor_flavors
+                const img = c.images
+                const flavor = c.humor_flavors
                 return (
                   <div key={c.id} className="flex items-start gap-3 p-3 rounded-lg"
                        style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)' }}>

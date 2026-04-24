@@ -11,7 +11,7 @@ export default async function CaptionRequestsPage() {
       created_datetime_utc,
       profile_id,
       image_id,
-      profiles(email, first_name, last_name),
+      profiles!caption_requests_profile_id_fkey(email, first_name, last_name),
       images(url, image_description)
     `, { count: 'exact' })
     .order('created_datetime_utc', { ascending: false })

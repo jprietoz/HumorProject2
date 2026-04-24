@@ -9,7 +9,7 @@ async function getImages() {
 
   const { data, error } = await db
     .from('images')
-    .select('id, url, image_description, is_public, is_common_use, created_datetime_utc, additional_context, profile_id, profiles(email, first_name, last_name)')
+    .select('id, url, image_description, is_public, is_common_use, created_datetime_utc, additional_context, profile_id, profiles!images_profile_id_fkey(email, first_name, last_name)')
     .order('created_datetime_utc', { ascending: false })
     .limit(200)
 

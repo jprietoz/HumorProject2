@@ -19,7 +19,7 @@ async function getCaptions(page = 0, flavorSlug?: string) {
       created_datetime_utc,
       image_id,
       images(url, image_description),
-      profiles(email, first_name, last_name),
+      profiles!captions_profile_id_fkey(email, first_name, last_name),
       humor_flavors(slug)
     `, { count: 'exact' })
     .order('created_datetime_utc', { ascending: false })
